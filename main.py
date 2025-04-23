@@ -14,11 +14,11 @@ import mediapipe as mp
 st.title("Face Mosaic App using MediaPipe")
 st.write("Upload a video, and this app will automatically detect faces and apply mosaic blur.")
 
-# Initialize MediaPipe Face Detection
+# Initialize MediaPipe Face Detection (adjusted for aggressive detection)
 @st.cache_resource
 def load_face_detector():
     mp_face = mp.solutions.face_detection
-    return mp_face.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+    return mp_face.FaceDetection(model_selection=1, min_detection_confidence=0.3)
 
 face_detector = load_face_detector()
 
@@ -57,8 +57,7 @@ if video_file:
                 bw = int(bboxC.width * w)
                 bh = int(bboxC.height * h)
 
-                # 安全な座標計算＋少し拡張
-                padding = 5  # ピクセル単位で拡張
+                padding = 5
                 x1 = max(0, x - padding)
                 y1 = max(0, y - padding)
                 x2 = min(w, x + bw + padding)
@@ -83,7 +82,6 @@ if video_file:
     with open(output_path, "rb") as f:
         st.download_button("Download mosaic video", f, file_name="face_mosaic_output.mp4")
 
-    # Clean up
     if os.path.exists(video_path):
         os.remove(video_path)
     if os.path.exists(output_path):
