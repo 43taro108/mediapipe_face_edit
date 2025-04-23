@@ -4,7 +4,6 @@ Created on Thu Apr 24 03:32:07 2025
 
 @author: ktrpt
 """
-
 import streamlit as st
 import cv2
 import numpy as np
@@ -58,13 +57,19 @@ if video_file:
                 bw = int(bboxC.width * w)
                 bh = int(bboxC.height * h)
 
-                # Apply mosaic
-                face_region = frame[y:y+bh, x:x+bw]
-                if face_region.size == 0:
-                    continue
-                mosaic = cv2.resize(face_region, (10, 10))
-                mosaic = cv2.resize(mosaic, (bw, bh), interpolation=cv2.INTER_NEAREST)
-                frame[y:y+bh, x:x+bw] = mosaic
+                # 安全な座標計算＋少し拡張
+                padding = 5  # ピクセル単位で拡張
+                x1 = max(0, x - padding)
+                y1 = max(0, y - padding)
+                x2 = min(w, x + bw + padding)
+                y2 = min(h, y + bh + padding)
+
+                face_region = frame[y1:y2, x1:x2]
+
+                if face_region.size > 0:
+                    mosaic = cv2.resize(face_region, (8, 8))
+                    mosaic = cv2.resize(mosaic, (x2 - x1, y2 - y1), interpolation=cv2.INTER_NEAREST)
+                    frame[y1:y2, x1:x2] = mosaic
 
         out.write(frame)
         frame_idx += 1
@@ -78,6 +83,7 @@ if video_file:
     with open(output_path, "rb") as f:
         st.download_button("Download mosaic video", f, file_name="face_mosaic_output.mp4")
 
+    # Clean up
     if os.path.exists(video_path):
         os.remove(video_path)
     if os.path.exists(output_path):
